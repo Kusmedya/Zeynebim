@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sevgilime Özel Hediye</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* --- TEMEL AYARLAR & ANİMASYONLU ARKA PLAN --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body { 
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #240b36, #4a192c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; 
+            color: #fff;
+        }
+
+        .app-container {
+            width: 100%; max-width: 450px; min-height: 100vh; 
+            background: transparent; 
+            position: relative; display: flex; flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- 1. ŞİFRE EKRANI (DOKUNMATİK SORUNU ÇÖZÜLDÜ) --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; right: 0; margin: 0 auto; width: 100%; max-width: 450px;
+            height: 100vh; 
+            background: rgba(15, 12, 41, 0.7); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 25px; text-align: center; color: #fff; transition: opacity 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .login-title { 
+            font-family: 'Dancing Script', cursive; font-size: 4.5rem; margin-bottom: 20px; font-weight: 700; 
+            background: linear-gradient(to right, #ff9a9e, #fecfef);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 154, 158, 0.4);
+        }
+        .login-subtitle { font-size: 1.05rem; font-weight: 300; line-height: 1.6; margin-bottom: 25px; padding: 0 15px; opacity: 0.9; }
+        .password-label { font-size: 0.95rem; font-weight: 400; margin-bottom: 30px; color: #ff9a9e; }
+
+        .input-wrapper { position: relative; width: 100%; max-width: 340px; z-index: 10005; }
+        .input-wrapper input {
+            position: relative; z-index: 10;
+            width: 100%; padding: 18px 110px 18px 25px; border-radius: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff; font-size: 1.05rem; outline: none; transition: all 0.3s ease;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+        }
+        .input-wrapper input:focus {
+            border-color: #ff9a9e;
+            box-shadow: 0 0 20px rgba(255, 154, 158, 0.3), inset 0 0 10px rgba(255, 154, 158, 0.1);
+        }
+        .input-wrapper input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .input-wrapper .action-btn {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%); z-index: 20;
+            background: linear-gradient(135deg, #ff9a9e, #fecfef); color: #4a192c; border: none; padding: 12px 24px;
+            border-radius: 30px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .input-wrapper .action-btn:active { transform: translateY(-50%) scale(0.95); }
+        
+        .error-alert {
+            color: #fff; background: rgba(230, 76, 101, 0.9); font-size: 0.9rem;
+            padding: 10px 20px; border-radius: 12px; margin-top: 20px; display: none;
+            box-shadow: 0 5px 15px rgba(230, 76, 101, 0.4);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        /* --- 2. ANA İÇERİK --- */
+        #main-content { display: none; width: 100%; padding: 25px 15px; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .love-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; padding: 35px 20px;
+            margin-bottom: 30px; text-align: center; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.05); 
+            position: relative; opacity: 0; 
+            animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+        
+        .love-card:nth-child(1) { animation-delay: 0.1s; }
+        .love-card:nth-child(2) { animation-delay: 0.3s; }
+        .love-card:nth-child(3) { animation-delay: 0.5s; }
+        .love-card:nth-child(4) { animation-delay: 0.7s; }
+
+        .love-card::before {
+            content: ''; position: absolute; left: 0; top: 35px; bottom: 35px;
+            width: 4px; background: linear-gradient(to bottom, #ff9a9e, #fecfef); 
+            border-radius: 0 4px 4px 0; box-shadow: 0 0 15px rgba(255, 154, 158, 0.6);
+        }
+        .card-heading { 
+            font-family: 'Dancing Script', cursive; font-size: 3.2rem; 
+            color: #ff9a9e; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(255, 154, 158, 0.3);
+        }
+        .heading-line { 
+            width: 80px; height: 3px; background: linear-gradient(to right, transparent, #ff9a9e, transparent); 
+            margin: 0 auto 25px; border-radius: 2px; 
+        }
+
+        .countdown-row { display: flex; justify-content: space-between; margin: 30px 0; gap: 8px; }
+        .countdown-box {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 154, 158, 0.3);
+            color: #fff; width: 24%; padding: 18px 5px; border-radius: 16px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2), inset 0 0 15px rgba(255, 154, 158, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .countdown-box:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(255, 154, 158, 0.3); }
+        .countdown-value { font-size: 1.8rem; font-weight: 600; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .countdown-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 500; margin-top: 4px; color: #ff9a9e; letter-spacing: 1px; }
+
+        .card-description { font-size: 0.95rem; color: #e0e0e0; line-height: 1.7; padding: 0 10px; font-weight: 300; }
+
+        .embed-video {
+            position: relative; padding-bottom: 56.25%; height: 0; border-radius: 16px; overflow: hidden; margin-bottom: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .embed-video iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .song-title-text { font-size: 1.15rem; font-weight: 500; color: #fff; margin-bottom: 8px; font-style: italic; }
+
+        .photo-stack { display: flex; flex-direction: column; gap: 20px; }
+        .photo-stack img { 
+            width: 100%; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 25px rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255,255,255,0.1); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .photo-stack img:hover { transform: scale(1.03) translateY(-5px); box-shadow: 0 15px 35px rgba(255, 154, 158, 0.4); border-color: rgba(255, 154, 158, 0.5); }
+
+        .text-letter-body { text-align: justify; padding: 0 10px; }
+        .text-letter-body p { font-size: 1rem; color: #f0f0f0; line-height: 1.9; margin-bottom: 18px; text-indent: 15px; font-weight: 300; }
+        .special-ask { font-weight: 600; color: #ff9a9e !important; font-size: 1.2rem !important; margin-top: 25px; text-align: center; text-indent: 0 !important; text-shadow: 0 2px 10px rgba(255, 154, 158, 0.3); }
+
+        .big-surprise-btn {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef); color: #4a192c; border: none; padding: 18px 30px; border-radius: 35px;
+            font-size: 1.2rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 35px;
+            box-shadow: 0 10px 25px rgba(255, 154, 158, 0.4); display: flex; justify-content: center; align-items: center; gap: 12px; 
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .big-surprise-btn::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
+            transform: skewX(-25deg); animation: shine 3s infinite;
+        }
+        @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+        .big-surprise-btn:active { transform: scale(0.95); box-shadow: 0 5px 15px rgba(255, 154, 158, 0.3); }
+
+        /* --- SÜRPRİZ PENCERESİ VE POLAROID --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(10px);
+        }
+        
+        .modal-content {
+            background: transparent; padding: 10px; width: 90%; max-width: 350px; text-align: center; position: relative;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        @keyframes popIn { 0% { transform: scale(0.5) translateY(50px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+
+        .polaroid-wrapper {
+            background: #fff; padding: 15px 15px 40px 15px; border-radius: 4px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 50px rgba(255, 154, 158, 0.4);
+            transform: rotate(-3deg); transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative; margin-bottom: 25px;
+        }
+        .polaroid-wrapper:hover { transform: rotate(0deg) scale(1.05); box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 80px rgba(255, 154, 158, 0.6); z-index: 10; }
+        .polaroid-img { width: 100%; height: auto; border-radius: 2px; display: block; filter: contrast(1.1) brightness(1.05) saturate(1.2); }
+        .polaroid-caption { font-family: 'Dancing Script', cursive; font-size: 2rem; color: #4b3839; position: absolute; bottom: -2px; left: 0; width: 100%; text-align: center; }
+
+        .modal-text { color: #fff; font-size: 1.15rem; font-weight: 400; margin-top: 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); line-height: 1.6; }
+        
+        .close-modal-btn {
+            position: absolute; top: -20px; right: -15px;
+            background: linear-gradient(135deg, #ff9a9e, #e06d6d); color: white; border: none; width: 45px; height: 45px;
+            border-radius: 50%; font-size: 1.3rem; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+            z-index: 10001; transition: transform 0.2s;
+        }
+        .close-modal-btn:hover { transform: scale(1.1) rotate(90deg); }
+
+        .copyright-bar { background: rgba(0, 0, 0, 0.3); color: #aaa; text-align: center; padding: 25px 15px; font-size: 0.85rem; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <div id="login-screen">
+            <h1 class="login-title">Zeynep 🤍 Buğra </h1>
+            <p class="login-subtitle">Bu Site seninle Barışmak için son ümidim sifreyi gir ve senin icin yaptığım özel siteye gir</p>
+            <p class="password-label">Şifre ("Tanışma tarihimiz Balım... ")</p>
+            <div class="input-wrapper">
+                <input type="password" id="secretKey" placeholder="Özel şifreniz">
+                <button id="submit-btn" onclick="validateKey()" class="action-btn">
+                    <i class="fa-solid fa-lock-open"></i> Aç
+                </button>
+            </div>
+            <div id="wrongNotice" class="error-alert">Güzelimm tekrar düşün bu değil malesef
+                    (örnek = 20mart ) şeklinde bitişik yaz</div>
+        </div>
+
+        <div id="main-content">
+            <div class="love-card">
+                <h2 class="card-heading">Birlikte Geçirdiğimiz Süre</h2>
+                <div class="heading-line"></div>
+                <div class="countdown-row">
+                    <div class="countdown-box"><div id="val-days" class="countdown-value">00</div><div class="countdown-label">Gün</div></div>
+                    <div class="countdown-box"><div id="val-hours" class="countdown-value">00</div><div class="countdown-label">Saat</div></div>
+                    <div class="countdown-box"><div id="val-mins" class="countdown-value">00</div><div class="countdown-label">Dakika</div></div>
+                    <div class="countdown-box"><div id="val-secs" class="countdown-value">00</div><div class="countdown-label">Saniye</div></div>
+                </div>
+                <p class="card-description">"Birlikte geçirdiğimiz her saniye bir Kedi 🐱 kadar değerli. Nice güzel günlere... "</p>
+            </div>
+
+            <div class="love-card">
+                <h2 class="card-heading">Bizim Şarkımız 🙃</h2>
+                <div class="heading-line"></div>
+                <div class="embed-video">
+                    <iframe src="https://www.youtube.com/embed/AIqqrpGMWRk?rel=0&modestbranding=1" allowfullscreen></iframe>
+                </div>
+                <p class="song-title-text">Yüzyüzeyken Konuşuruz - Kaş II</p>
+                <p class="card-description">"Senin seçtiğin, senin sevdiğin ve artık dinlerken sadece seni düşündüğüm o özel şarkı..."</p>
+            </div>
+
+            <div class="love-card">
+                <h2 class="card-heading">Anılarımız</h2>
+                <div class="heading-line"></div>
+                <div class="photo-stack">
+                    <img src="https://i.hizliresim.com/4fyijcy.jpg" alt="Anı 1">
+                    <img src="https://i.hizliresim.com/gv96ygk.jpg" alt="Anı 2">
+                    <img src="https://i.hizliresim.com/du5bnkv.jpg" alt="Anı 3">
+                    <img src="https://i.hizliresim.com/pslcx9r.jpg" alt="Anı 4">
+                    <img src="https://i.hizliresim.com/pe000sw.jpg" alt="Anı 5">
+                    <img src="https://i.hizliresim.com/a8clh27.jpg" alt="Anı 6">
+                    <img src="https://i.hizliresim.com/1j0bn2v.jpg" alt="Anı 7">                    
+                    <img src="https://i.hizliresim.com/9a2ygap.jpg" alt="Anı 8">
+                    <img src="https://i.hizliresim.com/p1f4bhc.jpg" alt="Anı 9">
+                    <img src="https://i.hizliresim.com/t1v9imx.jpg" alt="Anı 10">                    
+                    <img src="https://i.hizliresim.com/mixa5b1.jpg" alt="Anı 11">                 
+                    <img src="https://i.hizliresim.com/ngppqup.jpg" alt="Anı 12">
+                    <img src="https://i.hizliresim.com/l5tlkw1.jpg" alt="Anı 13">                    
+                    <img src="https://i.hizliresim.com/b20t8un.jpg" alt="Anı 14">
+                     <img src="https://i.hizliresim.com/dq89928.jpg" alt="Anı 15">
+                      <img src="https://i.hizliresim.com/q8nxjda.jpg" alt="Anı 16">
+                       <img src="https://i.hizliresim.com/fv83m1m.jpg" alt="Anı 17">
+                        <img src="https://i.hizliresim.com/5f0mmhd.jpg" alt="Anı 18">
+                </div>
+            </div>
+
+            <div class="love-card">
+                <h2 class="card-heading">Sevgilime Özel</h2>
+                <div class="heading-line"></div>
+                <div class="text-letter-body">
+                   <p>Güzelimm,</p>
+ <div class="text-letter-body">
+    <p>Güzelim su an belki aramızda kırgınlıklar mesafeler var ikimiz de hatalar yaptık ben çok üstüne gittim farkındayım birbirimizi hiç istemeden yıprattık dönüp arkama baktığımda bazı şeyler için içimde büyük bir pişmanlık var keşke öyle yapmdsyadjm sen nasıl düşünüyorsun bana hak veriyor musun bilmiyorum ama bildiğim ve emin olduğum tek bir şey var bu olanlar oturup konuşarak çözülmeyecek şey değil lan bir şey yok aq neyse bak ikimizde birbjrimizi seviyoruz yani öyle düşünüyorum şuanda ne düşünüyorsunuz bilmiyorum ama ben her gün her dk düşünüyorum acaba naptı morali nasıl canı sıkılıyor mu yemek yedi mi</p>
+
+    <p>kızım senin saçının teline zarar gelsin benim sanki kalbimden vurulmuş gibi hissederim belki şuan saçma sapan konuşuyorum bilmiyorum . benim sana olan sevgim asla bitmeyecek ben seni seviyorum senin gibi bir kızı bulmuşum kolay kolay vazgeçmem benim hayatımda tanıdığım en iyi kişi sensin beni kendi çocuğu gibi seven merak eden kıskanan lan bebegin gibi seviyordun sen beni ya benim annem beni senin kafar dusnumuyodur belkj bak ben bir aptallık ettim farkindayım senden de son bir şans bekliyorum o kadar bulusmak icin ne turlu seylerjn ustunden geldik bunumu atlatamayacagğiz beni anladigini biliyorum Gavırın gızı yeter be çektirdiğin bitir şu inadini ne beni senjn beni sevdigin gibi biri sevebilir bundsn sonra ne de seni benim gibi seven birisi cıkar ha nasip isi nasibinde ne varsa o olsun ama o kiside sen ol balımm </p>
+
+    <p>senin beni tamamen silip bilmediğini bilmiyorum ama bence biz birbirimizi hala çok seviyoruz Sırf bir anlık öfke ya da hatalar yüzünden bir ilişkiyi bitirmeye hiç niyetim yok. Seni öyle kolayca bırakmayacağım bizden vazgeçmeyeceğim Bu sayfa sadece geçmiş güzel günlerin değil her şeyi geride bırakıp eskisinden daha güçlü bir şekilde ilişkimize dönmek için benim son umudum hani sana Bir sürprizim var demiştim ömrü hayatında boyunca benden başka kimseden böyle bir sürpriz almazsın demiştim o sürprizim de bu</p>
+
+    <p>he bide lütfen eğer kararın olumsuz ise ayrılmayı kafaya koyduysan da aldığım yada yaptığım hediyeleri çöpe atma olur mu ben onları almak için yapmak için çok uğraştım işin para kısmında değilim sikerim parasını yine saçmalıyorum ben of amq ya bak bunları yüzüne söylemek isterdim ama olmuyor anla beni</p>
+
+    <p>seni çok seviyorum güzelim ne olursa olsun her zaman yanında olacağım asla bırakmam seni seni üzecek bir şey yapmamak için elinden ne geliyorsa da yapmaya hazırım sonsuza kadar seni çok seviyorum senden de olumlu bir haber bekliyorum lütfen iyi düşün taşın hadi senden cevap bekliyorumm güzelimm 🤍</p>
+</div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="copyright-bar">
+            © 2026. Buğra Kuş ©Buğrainc Tüm hakları saklıdır.
+        </footer>
+
+    </div>
+
+    <div id="surpriseModal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeSurprise()" class="close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="polaroid-wrapper">
+                <img src="https://i.hizliresim.com/örnek-hediye-resmi.jpg" alt="Hediye Kutusu" class="polaroid-img">
+                <div class="polaroid-caption">İyi ki varsın...</div>
+            </div>
+            <p class="modal-text">Gerçek hediyen seni bekliyor... Gözlerini kapa ve elini uzat! 😉</p>
+        </div>
+    </div>
+
+    <script>
+        const relationshipStart = new Date(2026, 3, 14, 0, 0); 
+
+        function validateKey() {
+            // Kullanıcının yazdığını al, boşlukları sil ve hepsini küçük harfe çevir. 
+            // Böylece "14 nisan", "14Nisan", "14 nisan " fark etmeksizin doğru kabul edecek.
+            let rawInput = document.getElementById('secretKey').value;
+            let formattedInput = rawInput.toLowerCase().replace(/\s/g, '');
+            
+            const loginLayer = document.getElementById('login-screen');
+            const contentLayer = document.getElementById('main-content');
+            const alertBox = document.getElementById('wrongNotice');
+
+            if (formattedInput === "14nisan") {
+                window.scrollTo(0, 0);
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+
+                contentLayer.style.display = "block";
+                loginLayer.style.display = "none";
+                
+                setTimeout(function() {
+                    window.scrollTo(0, 0);
+                }, 50);
+
+                triggerCounter(); 
+                setInterval(triggerCounter, 1000); 
+            } else {
+                // Hata mesajını yenile (animasyonun her tıkta tekrar çalışması için)
+                alertBox.style.display = "none";
+                setTimeout(() => {
+                    alertBox.style.display = "block";
+                }, 10);
+            }
+        }
+
+        document.getElementById('secretKey').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validateKey();
+            }
+        });
+
+        function triggerCounter() {
+            const rightNow = new Date(); 
+            const durationDiff = rightNow - relationshipStart; 
+
+            const daysComputed = Math.floor(durationDiff / (1000 * 60 * 60 * 24));
+            const hoursComputed = Math.floor((durationDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minsComputed = Math.floor((durationDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const secsComputed = Math.floor((durationDiff % (1000 * 60)) / 1000); 
+
+            document.getElementById('val-days').innerText = String(daysComputed).padStart(2, '0');
+            document.getElementById('val-hours').innerText = String(hoursComputed).padStart(2, '0');
+            document.getElementById('val-mins').innerText = String(minsComputed).padStart(2, '0');
+            document.getElementById('val-secs').innerText = String(secsComputed).padStart(2, '0'); 
+        }
+
+        function showSurprise() {
+            var duration = 3 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff9a9e', '#ffffff'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#fecfef', '#ffb3c1'] });
+
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+
+            document.getElementById('surpriseModal').style.display = 'flex';
+        }
+
+        function closeSurprise() { document.getElementById('surpriseModal').style.display = 'none'; }
+    </script>
+</body>
+</html>
